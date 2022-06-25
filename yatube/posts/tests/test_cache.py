@@ -20,7 +20,7 @@ class CacheTests(TestCase):
         self.authorized_client.force_login(self.user)
 
     def test_cache(self):
-        url = reverse('posts:index') 
+        url = reverse('posts:index')
         response_1 = self.authorized_client.get(url)
         post_0 = response_1.context['page_obj'][0]
         post_0.delete()
@@ -33,4 +33,3 @@ class CacheTests(TestCase):
         cache.clear()
         response_3 = self.authorized_client.get(url)
         self.assertNotEqual(response_1.content, response_3.content)
-
