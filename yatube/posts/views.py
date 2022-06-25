@@ -13,6 +13,7 @@ def index(request):
     context = {
         'title': title,
         'page_obj': page_obj,
+        'index': True
     }
     return render(request, template, context)
 
@@ -128,7 +129,8 @@ def follow_index(request):
     posts = Post.objects.filter(author__following__user=request.user)
     page_obj, total_count = get_paginator(posts, request)
     context = {
-        'page_obj': page_obj
+        'page_obj': page_obj,
+        'follow': True
     }
     return render(request, template, context)
 
@@ -147,9 +149,8 @@ def profile_follow(request, username):
 def profile_unfollow(request, username):
     template = 'posts:profile'
     author = get_object_or_404(User, username=username)
-    if author != request.user:
-        following = get_object_or_404(
-            Follow, user=request.user, author=author
-        )
-        following.delete()
+    following = get_object_or_404(
+        Follow, user=request.user, author=author
+    )
+    following.delete()
     return redirect(template, username)

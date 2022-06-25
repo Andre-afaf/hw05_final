@@ -6,7 +6,6 @@ from django.conf import settings
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import Client, TestCase, override_settings
 from django.urls import reverse
-
 from posts.models import Follow, Group, Post, User
 
 TEMP_MEDIA_ROOT = tempfile.mkdtemp(dir=settings.BASE_DIR)
@@ -235,40 +234,46 @@ class PostViewsTests(TestCase):
         client = self.authorized_author
         user = self.unfollower
         author = self.author
+        follower = Follow.objects.filter(
+            user=author,
+            author=self.unfollower
+        )
+        count_1 = follower.count()
         client.get(
             reverse(
                 'posts:profile_follow',
                 args=[user]
             )
         )
-        follower = Follow.objects.filter(
-            user=author,
-            author=self.unfollower
-        ).exists()
+        count_2 = follower.count()
         self.assertTrue(
-            follower,
+            follower.exists(),
             'Подписка невозможна'
         )
+        self.assertEqual(count_1 + 1, count_2)
 
     def test_unfollowing(self):
         """Тест отписки от автора."""
         client = self.authorized_author
         user = self.follower
         author = self.author
+        follower = Follow.objects.filter(
+            user=author,
+            author=self.follower
+        )
+        count_1 = follower.count()
         client.get(
             reverse(
                 'posts:profile_unfollow',
                 args=[user]
             ),
         )
-        follower = Follow.objects.filter(
-            user=author,
-            author=self.follower
-        ).exists()
+        count_2 = follower.count()
         self.assertFalse(
             follower,
             'Отписка невозможна'
         )
+        self.assertEqual(count_1 - 1, count_2)
 
     def test_new_post_showing_for_followers(self):
         follow_post = Post.objects.create(

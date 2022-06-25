@@ -9,26 +9,28 @@ class CacheTests(TestCase):
     @classmethod
     def setUpClass(cls):
         super().setUpClass()
-        cls.page_obj = []
         cls.user = User.objects.create_user(username='username')
-        cls.page_obj.append(Post.objects.create(
+        cls.post = Post.objects.create(
             author=cls.user,
             text='Тестовый пост'
-        ))
+        )
 
     def setUp(self):
-        self.guest_client = Client()
         self.authorized_client = Client()
         self.authorized_client.force_login(self.user)
 
-    def test_pages_uses_correct_template(self):
-        url = reverse('posts:index')
-        posts_count = Post.objects.count()
-        response = self.client.get(url)
-        content = response.content
-        self.assertEqual(posts_count, 1)
-        Post.objects.filter(id=1).delete()
-        self.assertNotEqual(posts_count, Post.objects.count())
-        self.assertEqual(content, self.client.get(url).content)
+    def test_cache(self):
+        url = reverse('posts:index') 
+        response_1 = self.authorized_client.get(url)
+        post_0 = response_1.context['page_obj'][0]
+        post_0.delete()
+        Post.objects.create(
+            author=self.user,
+            text='Тестовый пост 2'
+        )
+        response_2 = self.authorized_client.get(url)
+        self.assertEqual(response_1.content, response_2.content)
         cache.clear()
-        self.assertNotEqual(content, self.client.get(url).content)
+        response_3 = self.authorized_client.get(url)
+        self.assertNotEqual(response_1.content, response_3.content)
+
